@@ -74,6 +74,7 @@ kubectl get pod --output=wide -n demo
 #server   1/1     Running   0          45m   10.244.1.246   aks-nodepool1-22495599-vmss000000   <none>           <none>
 ```
 **Test connectivity without network policy:**
+
 In the client's shell, run the this to verify connectivity with the server. No output means  the connection is successful.
 ```sh
 /agnhost connect <server-ip>:80 --timeout=3s --protocol=tcp
