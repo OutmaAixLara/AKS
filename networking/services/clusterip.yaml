@@ -8,6 +8,6 @@ spec:
   type: ClusterIP
   ports:
     - protocol: TCP
-      port: 80
+      port: 9090
       targetPort: 5000
   

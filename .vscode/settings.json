@@ -1,4 +1,5 @@
 {
     "terminal.integrated.tabs.defaultColor": "terminal.ansiGreen",
-    "terminal.integrated.localEchoStyle": "dim"
+    "terminal.integrated.localEchoStyle": "dim",
+    "terminal.integrated.mouseWheelZoom": true
 }
