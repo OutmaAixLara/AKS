@@ -33,3 +33,13 @@ kubectl proxy --port=8001
 ```
 
 Now access Dashboard at: [http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard-kong-proxy:443/proxy/](http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard-kong-proxy:443/proxy/)
+
+
+
+## Creating sample user and getting Bearer Token for ServiceAccount
+
+For each of the following snippets for `ServiceAccount` and `ClusterRoleBinding`, you should copy them to new manifest files like `dashboard-adminuser.yaml` and use `kubectl apply -f dashboard-adminuser.yaml` to create them.
+To create these manifests and get a Bearer Token for ServiceAccount, please refer to https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md.
+
+
+
