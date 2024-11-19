@@ -1,6 +1,6 @@
 # AKS
 
-**Environment variables:**
+## Environment variables:
 ```sh
 $clusterName="AKS-Cluster"
 $resourceGroup="K8S-Test-Small-Env"
@@ -12,20 +12,20 @@ $subscriptionID="622693e3-522a-4968-af8b-d88f7a78a66a"
 ```
 
 
-**Create the resource group:**
+## Create the resource group:
 ```sh
 az group create --subscription $subscription --name $resourcegroup --location $location
 ```
 
-**AKS Cluster:**
+## AKS Cluster:
 
 *Create the AKS cluster with node pool configuration using "sectra-subnet-Kubernetes" subnet. We are using the Overlay netowkring model and we enable network policy to implement network segmentation.*
 ```sh
-az aks create --name $clusterName --resource-group $resourceGroup --location $location --node-count 2 --vnet-subnet-id /subscriptions/$subscriptionID/resourceGroups/$resourceGroup/providers/Microsoft.Network/virtualNetworks/$sectravnet/subnets/$sectrasubnetkubernetes --network-plugin azure --network-plugin-mode overlay --network-policy azure --pod-cidr 10.244.0.0/16 --dns-service-ip 10.0.0.10 --service-cidr 10.0.0.0/16 --generate-ssh-keys 
+az aks create --name $clusterName --resource-group $resourceGroup --location $location --node-count 2 --vnet-subnet-id /subscriptions/$subscriptionID/resourceGroups/$resourceGroup/providers/Microsoft.Network/virtualNetworks/$sectravnet/subnets/$sectrasubnetkubernetes --network-plugin azure --network-plugin-mode overlay --network-policy azure --pod-cidr 10.244.0.0/16 --dns-service-ip 10.0.0.10 --service-cidr 10.0.0.0/16 --generate-ssh-keys --enable-aad --enable-azure-rbac
 ```
 
 
-**Verify the network configuration:**
+## Verify the network configuration:
 ```sh
 Download credentials and configures the Kubectl to use them:
 az aks get-credentials -n $clusterName -g $resourceGroup
@@ -52,19 +52,18 @@ az aks show -n $clusterName -g $resourceGroup --query networkProfile.dnsServiceI
 #10.0.0.10 -> DNS service IP
 ```
 
+## Verify network policy setup:
 
-**Verify network policy setup:**
 
-
-First, create a *demo* namespace to run the example pods:
+First, create a `demo` namespace to run the example pods:
 ```sh
 kubectl create namespace demo
 ```
-Create a *server* pod. This pod serves on TCP port 80:
+Create a `server` pod. This pod serves on TCP port 80:
 ```sh
 kubectl run server -n demo --image=k8s.gcr.io/e2e-test-images/agnhost:2.33 --labels="app=server" --port=80 --command -- /agnhost serve-hostname --tcp --http=false --port "80"
 ```
-Create a *client* pod. The following command runs Bash on the client pod:
+Create a `client` pod. The following command runs Bash on the client pod:
 ```sh
 kubectl run -it client -n demo --image=k8s.gcr.io/e2e-test-images/agnhost:2.33 --command -- bash
 ```
@@ -73,13 +72,13 @@ Now, in a separate window, run the following command to get the server IP
 kubectl get pod --output=wide -n demo
 #server   1/1     Running   0          45m   10.244.1.246   aks-nodepool1-22495599-vmss000000   <none>           <none>
 ```
-**Test connectivity without network policy:**
+## Test connectivity without network policy:
 
 In the client's shell, run the this to verify connectivity with the server. No output means  the connection is successful.
 ```sh
 /agnhost connect <server-ip>:80 --timeout=3s --protocol=tcp
 ```
-**Test connectivity with network policy:**
+## Test connectivity with network policy:
 
 Create a file named demo-policy.yaml:
 ```sh
@@ -117,3 +116,5 @@ To be able to connect to the server again you can label the client with what we 
 ```sh
 kubectl label pod client -n demo app=client
 ```
+
+
