@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helloaachen-v1
+  labels:
+    app: helloaachen
+    version: v2
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: helloaachen
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: helloaachen
+        version: v2
+    spec:
+      containers:
+      - name: helloaachen
+        image: moaix/helloaachen:2.0.0.1
+        ports:
+        - containerPort: 8000
+        env: 
+        - name: REDIS_HOST
+          value: "localhost"
+        - name: REDIS_PORT
+          value: "6379"
+      - name: redis
+        image: redis:latest
+        ports:
+        - containerPort: 6379

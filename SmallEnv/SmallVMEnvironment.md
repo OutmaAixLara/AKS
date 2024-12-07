@@ -141,3 +141,5 @@ The environment have two VMs, one in the Management subnet, and one in the WebSe
     # Delete disks
     az disk delete --subscription $subscription --resource-group $resourcegroup --name $sectraosdiskshs1 --yes
     az disk delete --subscription $subscription --resource-group $resourcegroup --name $sectraosdiskmgmt1 --yes
+
+

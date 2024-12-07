@@ -1,0 +1,1060 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "natGateways_nat_gateway_name": {
+            "defaultValue": "nat-gateway",
+            "type": "String"
+        },
+        "virtualNetworks_sectra_vnet_name": {
+            "defaultValue": "sectra-vnet",
+            "type": "String"
+        },
+        "virtualMachines_sectra_vm_shs1_name": {
+            "defaultValue": "sectra-vm-shs1",
+            "type": "String"
+        },
+        "virtualMachines_sectra_vm_mgmt1_name": {
+            "defaultValue": "sectra-vm-mgmt1",
+            "type": "String"
+        },
+        "publicIPAddresses_public_ip_nat_name": {
+            "defaultValue": "public-ip-nat",
+            "type": "String"
+        },
+        "networkInterfaces_sectra_vm_shs1_nic_name": {
+            "defaultValue": "sectra-vm-shs1-nic",
+            "type": "String"
+        },
+        "networkInterfaces_sectra_vm_mgmt1_nic_name": {
+            "defaultValue": "sectra-vm-mgmt1-nic",
+            "type": "String"
+        },
+        "publicIPAddresses_myAGPublicIPAddress_name": {
+            "defaultValue": "myAGPublicIPAddress",
+            "type": "String"
+        },
+        "managedClusters_aksdemocluster_name": {
+            "defaultValue": "aksdemocluster",
+            "type": "String"
+        },
+        "applicationSecurityGroups_sectra_asg_shs_name": {
+            "defaultValue": "sectra-asg-shs",
+            "type": "String"
+        },
+        "registries_smallenvcontainerreg_name": {
+            "defaultValue": "smallenvcontainerreg",
+            "type": "String"
+        },
+        "networkSecurityGroups_sectra_nsg_kubernetes_name": {
+            "defaultValue": "sectra-nsg-kubernetes",
+            "type": "String"
+        },
+        "networkSecurityGroups_sectra_nsg_management_name": {
+            "defaultValue": "sectra-nsg-management",
+            "type": "String"
+        },
+        "networkSecurityGroups_sectra_nsg_webservers_name": {
+            "defaultValue": "sectra-nsg-webservers",
+            "type": "String"
+        },
+        "publicIPAddresses_sectra_vm_mgmt1_public_ip_name": {
+            "defaultValue": "sectra-vm-mgmt1-public-ip",
+            "type": "String"
+        },
+        "networkSecurityGroups_sectra_nsg_clientfacing_name": {
+            "defaultValue": "sectra-nsg-clientfacing",
+            "type": "String"
+        },
+        "publicIPAddresses_8dbacdad_5df5_4427_b04b_5d6308b01634_externalid": {
+            "defaultValue": "/subscriptions/622693e3-522a-4968-af8b-d88f7a78a66a/resourceGroups/MC_K8S-Test-Small-Env_aksdemocluster_swedencentral/providers/Microsoft.Network/publicIPAddresses/8dbacdad-5df5-4427-b04b-5d6308b01634",
+            "type": "String"
+        },
+        "userAssignedIdentities_aksdemocluster_agentpool_externalid": {
+            "defaultValue": "/subscriptions/622693e3-522a-4968-af8b-d88f7a78a66a/resourceGroups/MC_K8S-Test-Small-Env_aksdemocluster_swedencentral/providers/Microsoft.ManagedIdentity/userAssignedIdentities/aksdemocluster-agentpool",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.ContainerRegistry/registries",
+            "apiVersion": "2023-11-01-preview",
+            "name": "[parameters('registries_smallenvcontainerreg_name')]",
+            "location": "swedencentral",
+            "sku": {
+                "name": "Basic",
+                "tier": "Basic"
+            },
+            "properties": {
+                "adminUserEnabled": false,
+                "policies": {
+                    "quarantinePolicy": {
+                        "status": "disabled"
+                    },
+                    "trustPolicy": {
+                        "type": "Notary",
+                        "status": "disabled"
+                    },
+                    "retentionPolicy": {
+                        "days": 7,
+                        "status": "disabled"
+                    },
+                    "exportPolicy": {
+                        "status": "enabled"
+                    },
+                    "azureADAuthenticationAsArmPolicy": {
+                        "status": "enabled"
+                    },
+                    "softDeletePolicy": {
+                        "retentionDays": 7,
+                        "status": "disabled"
+                    }
+                },
+                "encryption": {
+                    "status": "disabled"
+                },
+                "dataEndpointEnabled": false,
+                "publicNetworkAccess": "Enabled",
+                "networkRuleBypassOptions": "AzureServices",
+                "zoneRedundancy": "Disabled",
+                "anonymousPullEnabled": false,
+                "metadataSearch": "Disabled"
+            }
+        },
+        {
+            "type": "Microsoft.Network/applicationSecurityGroups",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('applicationSecurityGroups_sectra_asg_shs_name')]",
+            "location": "swedencentral",
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('networkSecurityGroups_sectra_nsg_clientfacing_name')]",
+            "location": "swedencentral",
+            "properties": {
+                "securityRules": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('networkSecurityGroups_sectra_nsg_kubernetes_name')]",
+            "location": "swedencentral",
+            "properties": {
+                "securityRules": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('networkSecurityGroups_sectra_nsg_management_name')]",
+            "location": "swedencentral",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSHFromSectra",
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/securityRules', parameters('networkSecurityGroups_sectra_nsg_management_name'), 'SSHFromSectra')]",
+                        "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 200,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [
+                                "88.131.68.200",
+                                "88.131.68.201",
+                                "88.131.68.202"
+                            ],
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('networkSecurityGroups_sectra_nsg_webservers_name')]",
+            "location": "swedencentral",
+            "properties": {
+                "securityRules": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('publicIPAddresses_myAGPublicIPAddress_name')]",
+            "location": "swedencentral",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "ipAddress": "4.225.173.0",
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": [],
+                "ddosSettings": {
+                    "protectionMode": "VirtualNetworkInherited"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('publicIPAddresses_sectra_vm_mgmt1_public_ip_name')]",
+            "location": "swedencentral",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "ipAddress": "20.91.241.88",
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": [],
+                "ddosSettings": {
+                    "protectionMode": "VirtualNetworkInherited"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('virtualMachines_sectra_vm_mgmt1_name')]",
+            "location": "swedencentral",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_sectra_vm_mgmt1_nic_name'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_B1s"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "0001-com-ubuntu-server-focal-daily",
+                        "sku": "20_04-daily-lts-gen2",
+                        "version": "Latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('virtualMachines_sectra_vm_mgmt1_name'), '-os-disk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('virtualMachines_sectra_vm_mgmt1_name'), '-os-disk'))]"
+                        },
+                        "deleteOption": "Detach"
+                    },
+                    "dataDisks": [],
+                    "diskControllerType": "SCSI"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_sectra_vm_mgmt1_name')]",
+                    "adminUsername": "ubuntu",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false,
+                        "provisionVMAgent": true,
+                        "patchSettings": {
+                            "patchMode": "ImageDefault",
+                            "assessmentMode": "ImageDefault"
+                        }
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true,
+                    "requireGuestProvisionSignal": true
+                },
+                "securityProfile": {
+                    "uefiSettings": {
+                        "secureBootEnabled": true,
+                        "vTpmEnabled": true
+                    },
+                    "securityType": "TrustedLaunch"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_sectra_vm_mgmt1_nic_name'))]",
+                            "properties": {
+                                "primary": true
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('virtualMachines_sectra_vm_shs1_name')]",
+            "location": "swedencentral",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_sectra_vm_shs1_nic_name'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_B1s"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "0001-com-ubuntu-server-focal-daily",
+                        "sku": "20_04-daily-lts-gen2",
+                        "version": "Latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('virtualMachines_sectra_vm_shs1_name'), '-os-disk')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('virtualMachines_sectra_vm_shs1_name'), '-os-disk'))]"
+                        },
+                        "deleteOption": "Detach"
+                    },
+                    "dataDisks": [],
+                    "diskControllerType": "SCSI"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_sectra_vm_shs1_name')]",
+                    "adminUsername": "ubuntu",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false,
+                        "provisionVMAgent": true,
+                        "patchSettings": {
+                            "patchMode": "ImageDefault",
+                            "assessmentMode": "ImageDefault"
+                        }
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true,
+                    "requireGuestProvisionSignal": true
+                },
+                "securityProfile": {
+                    "uefiSettings": {
+                        "secureBootEnabled": true,
+                        "vTpmEnabled": true
+                    },
+                    "securityType": "TrustedLaunch"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_sectra_vm_shs1_nic_name'))]",
+                            "properties": {
+                                "primary": true
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2024-07-01",
+            "name": "[concat(parameters('virtualMachines_sectra_vm_mgmt1_name'), '/AzureNetworkWatcherExtension')]",
+            "location": "swedencentral",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_sectra_vm_mgmt1_name'))]"
+            ],
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Azure.NetworkWatcher",
+                "type": "NetworkWatcherAgentLinux",
+                "typeHandlerVersion": "1.4"
+            }
+        },
+        {
+            "type": "Microsoft.ContainerRegistry/registries/scopeMaps",
+            "apiVersion": "2023-11-01-preview",
+            "name": "[concat(parameters('registries_smallenvcontainerreg_name'), '/_repositories_admin')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerRegistry/registries', parameters('registries_smallenvcontainerreg_name'))]"
+            ],
+            "properties": {
+                "description": "Can perform all read, write and delete operations on the registry",
+                "actions": [
+                    "repositories/*/metadata/read",
+                    "repositories/*/metadata/write",
+                    "repositories/*/content/read",
+                    "repositories/*/content/write",
+                    "repositories/*/content/delete"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ContainerRegistry/registries/scopeMaps",
+            "apiVersion": "2023-11-01-preview",
+            "name": "[concat(parameters('registries_smallenvcontainerreg_name'), '/_repositories_pull')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerRegistry/registries', parameters('registries_smallenvcontainerreg_name'))]"
+            ],
+            "properties": {
+                "description": "Can pull any repository of the registry",
+                "actions": [
+                    "repositories/*/content/read"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ContainerRegistry/registries/scopeMaps",
+            "apiVersion": "2023-11-01-preview",
+            "name": "[concat(parameters('registries_smallenvcontainerreg_name'), '/_repositories_pull_metadata_read')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerRegistry/registries', parameters('registries_smallenvcontainerreg_name'))]"
+            ],
+            "properties": {
+                "description": "Can perform all read operations on the registry",
+                "actions": [
+                    "repositories/*/content/read",
+                    "repositories/*/metadata/read"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ContainerRegistry/registries/scopeMaps",
+            "apiVersion": "2023-11-01-preview",
+            "name": "[concat(parameters('registries_smallenvcontainerreg_name'), '/_repositories_push')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerRegistry/registries', parameters('registries_smallenvcontainerreg_name'))]"
+            ],
+            "properties": {
+                "description": "Can push to any repository of the registry",
+                "actions": [
+                    "repositories/*/content/read",
+                    "repositories/*/content/write"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ContainerRegistry/registries/scopeMaps",
+            "apiVersion": "2023-11-01-preview",
+            "name": "[concat(parameters('registries_smallenvcontainerreg_name'), '/_repositories_push_metadata_write')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerRegistry/registries', parameters('registries_smallenvcontainerreg_name'))]"
+            ],
+            "properties": {
+                "description": "Can perform all read and write operations on the registry",
+                "actions": [
+                    "repositories/*/metadata/read",
+                    "repositories/*/metadata/write",
+                    "repositories/*/content/read",
+                    "repositories/*/content/write"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ContainerService/managedClusters",
+            "apiVersion": "2024-06-02-preview",
+            "name": "[parameters('managedClusters_aksdemocluster_name')]",
+            "location": "swedencentral",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-kubernetes')]"
+            ],
+            "sku": {
+                "name": "Base",
+                "tier": "Free"
+            },
+            "kind": "Base",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "kubernetesVersion": "1.30",
+                "dnsPrefix": "aksdemoclu-K8S-Test-Small-E-622693",
+                "agentPoolProfiles": [
+                    {
+                        "name": "nodepool1",
+                        "count": 2,
+                        "vmSize": "Standard_DS2_v2",
+                        "osDiskSizeGB": 128,
+                        "osDiskType": "Managed",
+                        "kubeletDiskType": "OS",
+                        "workloadRuntime": "OCIContainer",
+                        "vnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-kubernetes')]",
+                        "maxPods": 250,
+                        "type": "VirtualMachineScaleSets",
+                        "maxCount": 5,
+                        "minCount": 1,
+                        "enableAutoScaling": true,
+                        "powerState": {
+                            "code": "Running"
+                        },
+                        "orchestratorVersion": "1.30",
+                        "enableNodePublicIP": false,
+                        "enableCustomCATrust": false,
+                        "mode": "System",
+                        "enableEncryptionAtHost": false,
+                        "enableUltraSSD": false,
+                        "osType": "Linux",
+                        "osSKU": "Ubuntu",
+                        "upgradeSettings": {
+                            "maxSurge": "10%"
+                        },
+                        "enableFIPS": false,
+                        "networkProfile": {},
+                        "securityProfile": {
+                            "sshAccess": "LocalUser",
+                            "enableVTPM": false,
+                            "enableSecureBoot": false
+                        }
+                    }
+                ],
+                "linuxProfile": {
+                    "adminUsername": "azureuser",
+                    "ssh": {
+                        "publicKeys": [
+                            {
+                                "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7hX1FgKYlhvtQ70ja7xbxZxOF/xCHyGWMmGD0kFO444IoOFJf6iWPOf/InjskigczbX2DJWx9DH6ovsO56ISXq5xjE2nxW4pKFPMkXqkqNnEXVwzC10NCrtGLHSi1Yw3Z+LI5Pp9ujdYaOgca5D+mEdSjzTfkgRXJhT35L4crhmJvIieUCFOOMpOpvMVmzJA190m4ob2kAQTS6Jh1IsLk3qHRo9+SuSh5FVtAnApyRoPqm89pNFltK45uQnvuCOABq3ItdanBbXnLunVktV1ZAzG5XEv22/xn+XYPD/r0L2Wsx7MhtFN1MCDC+NBpaokMtnLLGRw+mjAvC64ly3t7"
+                            }
+                        ]
+                    }
+                },
+                "windowsProfile": {
+                    "adminUsername": "azureuser",
+                    "enableCSIProxy": true
+                },
+                "servicePrincipalProfile": {
+                    "clientId": "msi"
+                },
+                "nodeResourceGroup": "[concat('MC_K8S-Test-Small-Env_', parameters('managedClusters_aksdemocluster_name'), '_swedencentral')]",
+                "enableRBAC": true,
+                "enablePodSecurityPolicy": false,
+                "supportPlan": "KubernetesOfficial",
+                "networkProfile": {
+                    "networkPlugin": "azure",
+                    "networkPluginMode": "overlay",
+                    "networkPolicy": "azure",
+                    "networkDataplane": "azure",
+                    "loadBalancerSku": "standard",
+                    "loadBalancerProfile": {
+                        "managedOutboundIPs": {
+                            "count": 1
+                        },
+                        "effectiveOutboundIPs": [
+                            {
+                                "id": "[parameters('publicIPAddresses_8dbacdad_5df5_4427_b04b_5d6308b01634_externalid')]"
+                            }
+                        ],
+                        "backendPoolType": "nodeIPConfiguration"
+                    },
+                    "podCidr": "10.244.0.0/16",
+                    "serviceCidr": "10.0.0.0/16",
+                    "dnsServiceIP": "10.0.0.10",
+                    "outboundType": "loadBalancer",
+                    "podCidrs": [
+                        "10.244.0.0/16"
+                    ],
+                    "serviceCidrs": [
+                        "10.0.0.0/16"
+                    ],
+                    "ipFamilies": [
+                        "IPv4"
+                    ],
+                    "podLinkLocalAccess": "IMDS"
+                },
+                "aadProfile": {
+                    "managed": true,
+                    "enableAzureRBAC": true,
+                    "tenantID": "9ef776ce-851e-48c1-9cb2-f5d8498c8b15"
+                },
+                "apiServerAccessProfile": {
+                    "authorizedIPRanges": [
+                        "88.131.68.200/32",
+                        "88.131.68.201/32",
+                        "88.131.68.202/32"
+                    ]
+                },
+                "identityProfile": {
+                    "kubeletidentity": {
+                        "resourceId": "[parameters('userAssignedIdentities_aksdemocluster_agentpool_externalid')]",
+                        "clientId": "469491dd-f9ba-473b-8727-351f5ba1022c",
+                        "objectId": "357350d6-555f-4a5e-934a-9016f16bc4f8"
+                    }
+                },
+                "autoScalerProfile": {
+                    "balance-similar-node-groups": "false",
+                    "daemonset-eviction-for-empty-nodes": false,
+                    "daemonset-eviction-for-occupied-nodes": true,
+                    "expander": "random",
+                    "ignore-daemonsets-utilization": false,
+                    "max-empty-bulk-delete": "10",
+                    "max-graceful-termination-sec": "600",
+                    "max-node-provision-time": "15m",
+                    "max-total-unready-percentage": "45",
+                    "new-pod-scale-up-delay": "0s",
+                    "ok-total-unready-count": "3",
+                    "scale-down-delay-after-add": "10m",
+                    "scale-down-delay-after-delete": "10s",
+                    "scale-down-delay-after-failure": "3m",
+                    "scale-down-unneeded-time": "10m",
+                    "scale-down-unready-time": "20m",
+                    "scale-down-utilization-threshold": "0.5",
+                    "scan-interval": "10s",
+                    "skip-nodes-with-local-storage": "false",
+                    "skip-nodes-with-system-pods": "true"
+                },
+                "autoUpgradeProfile": {
+                    "nodeOSUpgradeChannel": "NodeImage"
+                },
+                "disableLocalAccounts": false,
+                "securityProfile": {},
+                "storageProfile": {
+                    "diskCSIDriver": {
+                        "enabled": true,
+                        "version": "v1"
+                    },
+                    "fileCSIDriver": {
+                        "enabled": true
+                    },
+                    "snapshotController": {
+                        "enabled": true
+                    }
+                },
+                "oidcIssuerProfile": {
+                    "enabled": false
+                },
+                "ingressProfile": {
+                    "webAppRouting": {
+                        "enabled": false,
+                        "nginx": {
+                            "defaultIngressControllerType": "AnnotationControlled"
+                        }
+                    }
+                },
+                "workloadAutoScalerProfile": {},
+                "metricsProfile": {
+                    "costAnalysis": {
+                        "enabled": false
+                    }
+                },
+                "nodeProvisioningProfile": {
+                    "mode": "Manual"
+                },
+                "bootstrapProfile": {
+                    "artifactSource": "Direct"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/natGateways",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('natGateways_nat_gateway_name')]",
+            "location": "swedencentral",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_public_ip_nat_name'))]"
+            ],
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "idleTimeoutInMinutes": 10,
+                "publicIpAddresses": [
+                    {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_public_ip_nat_name'))]"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('networkSecurityGroups_sectra_nsg_management_name'), '/SSHFromSectra')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_management_name'))]"
+            ],
+            "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "22",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 200,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [
+                    "88.131.68.200",
+                    "88.131.68.201",
+                    "88.131.68.202"
+                ],
+                "destinationAddressPrefixes": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('publicIPAddresses_public_ip_nat_name')]",
+            "location": "swedencentral",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+            ],
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "natGateway": {
+                    "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+                },
+                "ipAddress": "4.223.90.48",
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": [],
+                "ddosSettings": {
+                    "protectionMode": "VirtualNetworkInherited"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('virtualNetworks_sectra_vnet_name'), '/GatewaySubnet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_sectra_vnet_name'))]"
+            ],
+            "properties": {
+                "addressPrefix": "10.16.0.0/24",
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.ContainerService/managedClusters/agentPools",
+            "apiVersion": "2024-06-02-preview",
+            "name": "[concat(parameters('managedClusters_aksdemocluster_name'), '/nodepool1')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('managedClusters_aksdemocluster_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-kubernetes')]"
+            ],
+            "properties": {
+                "count": 2,
+                "vmSize": "Standard_DS2_v2",
+                "osDiskSizeGB": 128,
+                "osDiskType": "Managed",
+                "kubeletDiskType": "OS",
+                "workloadRuntime": "OCIContainer",
+                "vnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-kubernetes')]",
+                "maxPods": 250,
+                "type": "VirtualMachineScaleSets",
+                "maxCount": 5,
+                "minCount": 1,
+                "enableAutoScaling": true,
+                "powerState": {
+                    "code": "Running"
+                },
+                "orchestratorVersion": "1.30",
+                "enableNodePublicIP": false,
+                "enableCustomCATrust": false,
+                "mode": "System",
+                "enableEncryptionAtHost": false,
+                "enableUltraSSD": false,
+                "osType": "Linux",
+                "osSKU": "Ubuntu",
+                "upgradeSettings": {
+                    "maxSurge": "10%"
+                },
+                "enableFIPS": false,
+                "networkProfile": {},
+                "securityProfile": {
+                    "sshAccess": "LocalUser",
+                    "enableVTPM": false,
+                    "enableSecureBoot": false
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('networkInterfaces_sectra_vm_mgmt1_nic_name')]",
+            "location": "swedencentral",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_sectra_vm_mgmt1_public_ip_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-management')]"
+            ],
+            "kind": "Regular",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_sectra_vm_mgmt1_nic_name')), '/ipConfigurations/ipconfig1')]",
+                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
+                        "properties": {
+                            "privateIPAddress": "192.168.0.4",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_sectra_vm_mgmt1_public_ip_name'))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-management')]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false,
+                "disableTcpStateTracking": false,
+                "nicType": "Standard",
+                "auxiliaryMode": "None",
+                "auxiliarySku": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('networkInterfaces_sectra_vm_shs1_nic_name')]",
+            "location": "swedencentral",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-webservers')]",
+                "[resourceId('Microsoft.Network/applicationSecurityGroups', parameters('applicationSecurityGroups_sectra_asg_shs_name'))]"
+            ],
+            "kind": "Regular",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_sectra_vm_shs1_nic_name')), '/ipConfigurations/ipconfig1')]",
+                        "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
+                        "properties": {
+                            "privateIPAddress": "192.168.2.4",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-webservers')]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4",
+                            "applicationSecurityGroups": [
+                                {
+                                    "id": "[resourceId('Microsoft.Network/applicationSecurityGroups', parameters('applicationSecurityGroups_sectra_asg_shs_name'))]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false,
+                "disableTcpStateTracking": false,
+                "nicType": "Standard",
+                "auxiliaryMode": "None",
+                "auxiliarySku": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('virtualNetworks_sectra_vnet_name'), '/sectra-subnet-clientfacing')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_sectra_vnet_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_clientfacing_name'))]",
+                "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+            ],
+            "properties": {
+                "addressPrefix": "192.168.1.0/24",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_clientfacing_name'))]"
+                },
+                "natGateway": {
+                    "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+                },
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('virtualNetworks_sectra_vnet_name'), '/sectra-subnet-kubernetes')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_sectra_vnet_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_kubernetes_name'))]",
+                "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+            ],
+            "properties": {
+                "addressPrefix": "192.168.8.0/24",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_kubernetes_name'))]"
+                },
+                "natGateway": {
+                    "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+                },
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('virtualNetworks_sectra_vnet_name'), '/sectra-subnet-management')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_sectra_vnet_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_management_name'))]",
+                "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+            ],
+            "properties": {
+                "addressPrefix": "192.168.0.0/24",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_management_name'))]"
+                },
+                "natGateway": {
+                    "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+                },
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(parameters('virtualNetworks_sectra_vnet_name'), '/sectra-subnet-webservers')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_sectra_vnet_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_webservers_name'))]",
+                "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+            ],
+            "properties": {
+                "addressPrefix": "192.168.2.0/24",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_webservers_name'))]"
+                },
+                "natGateway": {
+                    "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+                },
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Disabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2024-01-01",
+            "name": "[parameters('virtualNetworks_sectra_vnet_name')]",
+            "location": "swedencentral",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_management_name'))]",
+                "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_webservers_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_clientfacing_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_kubernetes_name'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "192.168.0.0/24",
+                        "10.16.0.0/24",
+                        "192.168.2.0/24",
+                        "192.168.1.0/24",
+                        "192.168.8.0/24"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "GatewaySubnet",
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'GatewaySubnet')]",
+                        "properties": {
+                            "addressPrefix": "10.16.0.0/24",
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        },
+                        "type": "Microsoft.Network/virtualNetworks/subnets"
+                    },
+                    {
+                        "name": "sectra-subnet-management",
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-management')]",
+                        "properties": {
+                            "addressPrefix": "192.168.0.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_management_name'))]"
+                            },
+                            "natGateway": {
+                                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+                            },
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        },
+                        "type": "Microsoft.Network/virtualNetworks/subnets"
+                    },
+                    {
+                        "name": "sectra-subnet-webservers",
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-webservers')]",
+                        "properties": {
+                            "addressPrefix": "192.168.2.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_webservers_name'))]"
+                            },
+                            "natGateway": {
+                                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+                            },
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        },
+                        "type": "Microsoft.Network/virtualNetworks/subnets"
+                    },
+                    {
+                        "name": "sectra-subnet-clientfacing",
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-clientfacing')]",
+                        "properties": {
+                            "addressPrefix": "192.168.1.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_clientfacing_name'))]"
+                            },
+                            "natGateway": {
+                                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+                            },
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        },
+                        "type": "Microsoft.Network/virtualNetworks/subnets"
+                    },
+                    {
+                        "name": "sectra-subnet-kubernetes",
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_sectra_vnet_name'), 'sectra-subnet-kubernetes')]",
+                        "properties": {
+                            "addressPrefix": "192.168.8.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_sectra_nsg_kubernetes_name'))]"
+                            },
+                            "natGateway": {
+                                "id": "[resourceId('Microsoft.Network/natGateways', parameters('natGateways_nat_gateway_name'))]"
+                            },
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        },
+                        "type": "Microsoft.Network/virtualNetworks/subnets"
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false
+            }
+        }
+    ]
+}

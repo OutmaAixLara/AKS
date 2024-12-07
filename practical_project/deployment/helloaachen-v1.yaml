@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helloaachen-v1
+  labels:
+    app: helloaachen
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: helloaachen
+      version: v1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: helloaachen
+        version: v1
+    spec:
+      containers:
+      - name: helloaachen
+        image: moaix/helloaachen:1.0.0.1
+        ports:
+        - containerPort: 8000
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8000
+            httpHeaders:
+            - name: Custom-Header
+              value: Awesome
+          initialDelaySeconds: 3
+          periodSeconds: 60
+        env: 
+        - name: REDIS_HOST
+          value: "localhost"
+        - name: REDIS_PORT
+          value: "6379"
+      - name: redis
+        image: redis:latest
+        ports:
+        - containerPort: 6379

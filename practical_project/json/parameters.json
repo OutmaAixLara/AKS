@@ -1,0 +1,60 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "natGateways_nat_gateway_name": {
+            "value": null
+        },
+        "virtualNetworks_sectra_vnet_name": {
+            "value": null
+        },
+        "virtualMachines_sectra_vm_shs1_name": {
+            "value": null
+        },
+        "virtualMachines_sectra_vm_mgmt1_name": {
+            "value": null
+        },
+        "publicIPAddresses_public_ip_nat_name": {
+            "value": null
+        },
+        "networkInterfaces_sectra_vm_shs1_nic_name": {
+            "value": null
+        },
+        "networkInterfaces_sectra_vm_mgmt1_nic_name": {
+            "value": null
+        },
+        "publicIPAddresses_myAGPublicIPAddress_name": {
+            "value": null
+        },
+        "managedClusters_aksdemocluster_name": {
+            "value": null
+        },
+        "applicationSecurityGroups_sectra_asg_shs_name": {
+            "value": null
+        },
+        "registries_smallenvcontainerreg_name": {
+            "value": null
+        },
+        "networkSecurityGroups_sectra_nsg_kubernetes_name": {
+            "value": null
+        },
+        "networkSecurityGroups_sectra_nsg_management_name": {
+            "value": null
+        },
+        "networkSecurityGroups_sectra_nsg_webservers_name": {
+            "value": null
+        },
+        "publicIPAddresses_sectra_vm_mgmt1_public_ip_name": {
+            "value": null
+        },
+        "networkSecurityGroups_sectra_nsg_clientfacing_name": {
+            "value": null
+        },
+        "publicIPAddresses_8dbacdad_5df5_4427_b04b_5d6308b01634_externalid": {
+            "value": null
+        },
+        "userAssignedIdentities_aksdemocluster_agentpool_externalid": {
+            "value": null
+        }
+    }
+}
