@@ -17,7 +17,7 @@ As a network CNI, we used the Azure CNI Overlay model. This means that the pods 
     $subscriptionID= <subscripton ID>
     $resourcegroup = <resource group>
     $location = <location>
-    $clusterName= <AKS cluster name>
+    $clusterName = <AKS cluster name>
 
  
     $companyvnet = "company-vnet"
