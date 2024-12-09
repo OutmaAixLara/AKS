@@ -129,7 +129,7 @@ As a network CNI, we used the Azure CNI Overlay model. This means that the pods 
 
 ## Create the AKS Cluster:
 
-*Create the AKS cluster with node pool configuration using "company-subnet-Kubernetes" subnet. We are using the Overlay netowkring model and we enable network policy to implement the network segmentation. Futhermore we enable RBAC to manage access controls and Istio-based service mesh add-on for Gateway API and we secure access to the API server using authorized IP address ranges*
+*Create the AKS cluster with node pool configuration using "company-subnet-Kubernetes" subnet. We are using the Overlay netowkring model and we enable network policy to implement the network segmentation. Futhermore we enable RBAC to manage access controls and we secure access to the API server using authorized IP address ranges*
 ```sh
 az aks create --name $clusterName --resource-group $resourceGroup --location $location --node-count 2 --vnet-subnet-id /subscriptions/$subscriptionID/resourceGroups/$resourceGroup/providers/Microsoft.Network/virtualNetworks/$companyvnet/subnets/$companysubnetkubernetes --network-plugin azure --network-plugin-mode overlay --network-policy azure --pod-cidr 10.244.0.0/16 --dns-service-ip 10.0.0.10 --service-cidr 10.0.0.0/16 --generate-ssh-keys --enable-aad --enable-azure-rbac --enable-app-routing --api-server-authorized-ip-ranges 88.131.68.200,88.131.68.201,88.131.68.202
 ```
